@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ورشة الأكواد</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d1419">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{color-scheme:dark;--bg:#0d1419;--panel:#121b22;--ink:#e6eef3;--mut:#8da0ad;--acc:#35d0b4;--accink:#04231d;--line:#25333d;--ed:#0f171d;--err:#ff8a80;--mono:ui-monospace,Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,'Segoe UI',Tahoma,sans-serif;padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)}
+#app{height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
+h1{font-size:17px}
+.acts{display:flex;gap:5px}
+button{font:700 14px system-ui,Tahoma,sans-serif;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+#tabs{display:flex;gap:6px;padding:8px 10px 0;background:var(--panel)}
+#tabs button{flex:1;border-radius:10px 10px 0 0;border-bottom:0;color:var(--mut);font-family:var(--mono)}
+#tabs button.on{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+#qk{display:flex;gap:6px;overflow-x:auto;padding:7px 10px;background:var(--panel);border-bottom:1px solid var(--line);direction:ltr}
+#qk button{font-family:var(--mono);min-width:38px;padding:7px 8px;flex:none}
+main{flex:1;min-height:0;display:flex}
+#ed{flex:1;min-width:0;display:flex}
+#ed textarea{display:none;flex:1;width:100%;resize:none;border:0;background:var(--ed);color:var(--ink);font:15px/1.65 var(--mono);padding:12px;direction:ltr;text-align:left;white-space:pre;overflow:auto;tab-size:2}
+body[data-t=html] #html,body[data-t=css] #css,body[data-t=js] #js{display:block}
+body[data-t=pv] #ed,body[data-t=pv] #qk{display:none}
+#pv{flex:1;min-width:0;display:none;flex-direction:column;background:#fff}
+body[data-t=pv] #pv{display:flex}
+#err{padding:8px 12px;background:var(--panel);color:var(--err);font-size:13px;font-weight:700}
+#err[hidden]{display:none}
+iframe{flex:1;width:100%;border:0;background:#fff}
+@media (min-width:820px){#pv{display:flex!important;border-inline-start:1px solid var(--line)}body[data-t=pv] #ed,body[data-t=pv] #qk{display:flex}#tabs button[data-t=pv]{display:none}}
+</style>
+</head>
+<body data-t="html">
+<div id="app">
+<header>
+  <h1>ورشة الأكواد</h1>
+  <div class="acts"><button id="open">📂 فتح</button><button id="save">💾 حفظ</button><button id="cp">📋 نسخ</button></div>
+</header>
+<nav id="tabs"><button data-t="html" class="on">HTML</button><button data-t="css">CSS</button><button data-t="js">JS</button><button data-t="pv">المعاينة</button></nav>
+<div id="qk"></div>
+<main>
+  <section id="ed">
+    <textarea id="html" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+    <textarea id="css" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+    <textarea id="js" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+  </section>
+  <section id="pv"><div id="err" hidden></div><iframe id="fr" sandbox="allow-scripts"></iframe></section>
+</main>
+</div>
+<script>
+/* الاستخدام: افتح كل تاب وادوس "فتح" واختار ملفك (index.html / style.css / script.js)، عدّل، وبعدين "حفظ". */
+var $=function(s){return document.querySelector(s)},S='<scr'+'ipt>',E='<\/scr'+'ipt>';
+var F={html:$('#html'),css:$('#css'),js:$('#js')},fr=$('#fr'),err=$('#err'),last='html',tm=null,KEY='workshop-v2';
+var NAMES={html:'index.html',css:'style.css',js:'script.js'},MIME={html:'text/html',css:'text/css',js:'text/javascript'};
+var DEF={html:'<h1>أهلاً بيك!</h1>\n<p>افتح ملفاتك من زرار "فتح" أو اكتب هنا.</p>\n<button id="b">اضغط هنا</button>',
+ css:'body{font-family:system-ui,sans-serif;background:#fff7e6;text-align:center;padding:40px 20px;direction:rtl}\nbutton{background:#0a7d6e;color:#fff;border:0;border-radius:12px;padding:12px 24px;font-size:18px}',
+ js:'var b=document.getElementById("b");\nb.onclick=function(){b.textContent="شغّال!"};'};
+function load(){var d=null;try{d=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}d=d||DEF;F.html.value=d.html;F.css.value=d.css;F.js.value=d.js}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({html:F.html.value,css:F.css.value,js:F.js.value}))}catch(e){}}
+function build(){var h=F.html.value,c=F.css.value,j=F.js.value,hasL=/href=["']style\.css["']/i.test(h),hasS=/src=["']script\.js["']/i.test(h);
+  var hook=S+'window.onerror=function(m,u,l){parent.postMessage({e:m+" (سطر "+l+")"},"*")}'+E;
+  if(hasL)h=h.replace(/<link[^>]*href=["']style\.css["'][^>]*>/i,function(){return '<style>'+c+'</style>'});
+  if(hasS)h=h.replace(/<script[^>]*src=["']script\.js["'][^>]*><\/script>/i,function(){return S+j+E});
+  if(!/<html/i.test(h)){h='<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+c+'</style></head><body>'+h+S+j+E+'</body></html>'}
+  else{if(!hasL)h=h.replace(/<\/head>/i,function(){return '<style>'+c+'</style></head>'});if(!hasS)h=h.replace(/<\/body>/i,function(){return S+j+E+'</body>'})}
+  return /<head[^>]*>/i.test(h)?h.replace(/<head[^>]*>/i,function(m){return m+hook}):hook+h}
+function render(){err.hidden=true;fr.srcdoc=build()}
+function later(){save();clearTimeout(tm);tm=setTimeout(render,350)}
+window.addEventListener('message',function(e){if(e.source===fr.contentWindow&&e.data&&e.data.e){err.hidden=false;err.textContent='خطأ في الجافاسكربت: '+e.data.e}});
+['html','css','js'].forEach(function(k){F[k].addEventListener('input',later);F[k].addEventListener('keydown',function(e){if(e.key==='Tab'){e.preventDefault();ins('  ')}})});
+var wide=matchMedia('(min-width:820px)');
+function setTab(t){if(t==='pv'&&wide.matches)t=last;if(t!=='pv')last=t;document.body.dataset.t=t;
+  document.querySelectorAll('#tabs button').forEach(function(b){b.classList.toggle('on',b.dataset.t===t)});if(t==='pv')render()}
+document.querySelectorAll('#tabs button').forEach(function(b){b.onclick=function(){setTab(b.dataset.t)}});
+if(wide.addEventListener)wide.addEventListener('change',function(){setTab(document.body.dataset.t)});
+function ins(txt){var t=F[last];t.focus();t.setRangeText(txt,t.selectionStart,t.selectionEnd,'end');t.dispatchEvent(new Event('input'))}
+['<','>','/','"',"'",'=','{','}','(',')',';',':','#','tab'].forEach(function(k){
+  var b=document.createElement('button');b.textContent=k==='tab'?'⇥':k;
+  b.addEventListener('pointerdown',function(e){e.preventDefault();ins(k==='tab'?'  ':k)});$('#qk').appendChild(b)});
+var fi=document.createElement('input');fi.type='file';
+fi.onchange=function(){var f=fi.files[0];if(!f)return;var r=new FileReader();r.onload=function(){F[last].value=r.result;later()};r.readAsText(f);fi.value=''};
+$('#open').onclick=function(){fi.click()};
+$('#save').onclick=function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([F[last].value],{type:MIME[last]+';charset=utf-8'}));a.download=NAMES[last];document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},3000)};
+$('#cp').onclick=function(){var b=this,txt=F[last].value;
+  function ok(){b.textContent='✓ اتنسخ';setTimeout(function(){b.textContent='📋 نسخ'},1500)}
+  function fb(){var a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){}a.remove()}
+  try{navigator.clipboard.writeText(txt).then(ok,fb)}catch(e){fb()}};
+load();render();
+try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')}catch(e){}
+</script>
+</body>
+</html>
